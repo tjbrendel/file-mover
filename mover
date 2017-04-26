@@ -1,0 +1,46 @@
+$encodedDirectory = "C:\Users\dptjb\Desktop\Test Folder"
+$encodedDirectoryArray = @(Get-ChildItem $encodedDirectory)
+$movieDirectory = "C:\Users\dptjb\Desktop\Movies Test"
+$TVDirectory = "C:\Users\dptjb\Desktop\TV Show Test"
+$encodedDirectoryArraySize = ($encodedDirectoryArray | Measure-Object).count
+
+if($encodedDirectoryArray.count -ne 0){
+    for($i=0; $i -lt $encodedDirectoryArray.count; $i++){
+        $fileNameBase = $encodedDirectoryArray[$i].Basename
+        $fileNameExt = $encodedDirectoryArray[$i].Name
+        $currentItemPath = $encodedDirectory + "\" + $fileNameExt
+        $destMovieDirectoryPath = $movieDirectory + "\" + $fileNameBase
+
+        if($fileNameBase -match "-s..e.."){
+            $tvSplit = $fileNameBase.split("-")
+            $tvSplitTwo = $tvSplit[1].split("e")
+            $tvShowName = $tvSplit[0]
+            $tvShowSeason = $tvSplitTwo[0] -replace '[s]'
+            $tvShowEpisode = $tvSplitTwo[1]
+            $destTVShowNameDirectoryPath = $TVDirectory + "\" + $tvShowName
+            $destTVShowSeasonDirectoryPath = $destTVShowNameDirectoryPath + "\Season " + $tvShowSeason
+            
+            if(Test-Path $destTVShowSeasonDirectoryPath){
+                Copy-Item $currentItemPath -Destination $destTVShowSeasonDirectoryPath
+            } else {
+                if (Test-Path $destTVShowNameDirectoryPath){
+                    New-Item $destTVShowSeasonDirectoryPath -type directory
+                    Copy-Item $currentItemPath -Destination $destTVShowSeasonDirectoryPath
+                } else {
+                    New-Item $destTVShowNameDirectoryPath -type directory
+                    New-Item $destTVShowSeasonDirectoryPath -type directory
+                    Copy-Item $currentItemPath -Destination $destTVShowSeasonDirectoryPath
+                }
+            }
+        } else {
+            if(Test-Path $destMovieDirectoryPath){
+                Remove-Item $destMovieDirectoryPath -Recurse
+            }
+            
+            New-Item $destMovieDirectoryPath -type directory
+            Copy-Item $currentItemPath -Destination $destMovieDirectoryPath
+        }
+        
+    Remove-Item $currentItemPath
+    }
+}
